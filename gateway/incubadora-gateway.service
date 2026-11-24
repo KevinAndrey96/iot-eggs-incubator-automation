@@ -1,0 +1,16 @@
+[Unit]
+Description=IoT Egg Incubator Serial Telemetry Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/incubadora/gateway
+ExecStart=/usr/bin/python3 /home/pi/incubadora/gateway/serial_telemetry_gateway.py --port /dev/ttyACM0 --url http://192.168.1.100:8096/Service.php
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

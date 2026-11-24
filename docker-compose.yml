@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incubadora-web
+    restart: unless-stopped
+    ports:
+      - "8096:80"
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: shape_incubadora
+      DB_USERNAME: incubadora_user
+      DB_PASSWORD: incubadora_secret
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - incubadora-network
+
+  mariadb:
+    image: mariadb:10.6
+    container_name: incubadora-mariadb
+    restart: unless-stopped
+    ports:
+      - "3315:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: shape_incubadora
+      MYSQL_USER: incubadora_user
+      MYSQL_PASSWORD: incubadora_secret
+    volumes:
+      - incubadora-db-data:/var/lib/mysql
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - incubadora-network
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: incubadora-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8097:80"
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_secret
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - incubadora-network
+
+networks:
+  incubadora-network:
+    driver: bridge
+
+volumes:
+  incubadora-db-data:
+    driver: local
